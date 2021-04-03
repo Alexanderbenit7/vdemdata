@@ -1,0 +1,46 @@
+
+The Electoral Democracy Index (v2x_polyarchy) is formed by taking the average of, on the one hand, the weighted average of the indices measuring freedom of association (thick) (v2x_frassoc_thick), clean elections (v2xel_frefair), freedom of expression and alternative sources of information (v2x_free_altinf), elected officials (v2x_elecoff), and suffrage (v2x_suffr) and, on the other, the five-way multiplicative interaction between those indices.
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ggthemes)
+library(extrafont)
+```
+
+```{r}
+peru = vdem[vdem$country_name == "Peru",]
+subset_peru = peru[,c("year","v2x_polyarchy")]
+```
+
+```{r}
+subset_peru %>% 
+  ggplot(aes(x = year, y = v2x_polyarchy)) + 
+  geom_line(size = 1, color = "red") + 
+  labs(title = "Electoral Democracy Index - Peru",
+       subtitle = "Evolution over time",
+       x = "Year",
+       y = "Index") +
+  
+  theme_fivethirtyeight()+
+  theme(axis.title = element_text(), text = element_text(family = "Arial Narrow"))
+
+```
+
+```{r}
+subset_peru = subset_peru[subset_peru$year > 1980,]
+```
+
+```{r}
+subset_peru %>% 
+  ggplot(aes(x = year, y = v2x_polyarchy)) + 
+  geom_line(size = 1, color = "red") + 
+  labs(title = "Electoral Democracy Index - Peru",
+       subtitle = "Evolution over time (1980 - 2020)",
+       x = "Year",
+       y = "Index") +
+  
+  theme_fivethirtyeight()+
+  theme(axis.title = element_text(), text = element_text(family = "Arial Narrow"))
+
+```
+
