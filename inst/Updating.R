@@ -6,18 +6,52 @@
 # pull latest package version to your local RStudio/git (version control set up)
 # do the following updates
 
-# load the new datasets and save them as RData in the package folder "data"
-# vdem
-vdem <- readRDS("V-Dem-CY-Full+Others-v14.rds")
-save("vdem", file = "data/vdem.RData")
-# vparty (if there are updates)
-#vparty <- readRDS("V-Dem-CPD-Party-V2.rds")
-#save("vparty", file = "data/vparty.RData")
+library(dplyr)
 
-# load vdem codebook
-# NOTE: clean out LaTeX code is NOT done yet (future versions might do so)
+remove_latex <- function(x) {
+    x <- gsub("\\\\textit\\{([^}]+)\\}", "\\1", x)
+    x <- gsub("\\\\href\\{([^}]+)\\}\\{([^}]+)\\}", "\\2", x)
+    x <- gsub("\\\\emph\\{([^}]+)\\}", "\\1", x)
+    x <- gsub("\\\\underline\\{([^}]+)\\}", "\\1", x)
+    x <- gsub("\\\\end\\{itemize\\}|\\\\begin\\{itemize\\}", "", x)
+    x <- gsub("\\\\item", "", x)
+    x <- gsub("\\\\nth\\{([^}]+)\\}", "\\1", x)
+    x <- gsub("\\\\|\\n\t\t|\\t\t|\\t|\\n", "", x)
+}
+
+# Load the new datasets and save them as RData in the package folder "data"
+# vdem
+vdem <- readRDS("~/data/ds_construction/v15/dataset/V-Dem-CY-Full+Others/V-Dem-CY-Full+Others-v15.rds")
+
+save("vdem", file = "data/vdem.RData")
+
+# vparty (if there are updates)
+vparty <- readRDS("V-Dem-CPD-Party-V2.rds")
+save("vparty", file = "data/vparty.RData")
+
+# Load vdem codebook
 # save as RData in the package folder "data"
-codebook <- readRDS("codebook.rds")
+ellodiseff <- "We have used different calculations to find the lower chamber election district effective magnitude value, depending on the electoral system. In electoral systems with reserved seats, reserved seats are treated as a second tier in a hybrid system. Effective magnitude is calculated separately for reserved seats. Effective magnitude in such systems is the weighted average where the weight is the proportion of seats allocated in each tier."
+
+codebook <- readRDS("~/proj/reference_documents/refs/codebook.rds") %>%
+    select(name, vartype, tag, projectmanager, question, clarification, responses,
+        scale, notes, crosscoder_aggregation, cy_aggregation, datarelease, years, convergence) %>%
+    filter(!grepl("commnt|coment|intro", tag)) %>%
+    # fix formulas (most formulas are in aggregation and therefore not included in the package)
+    mutate(clarification = case_when(tag == "v2ellodiseff" ~ ellodiseff,
+        TRUE ~ clarification)) %>%
+    # remove LaTeX code
+    mutate(question = remove_latex(question),
+        clarification = remove_latex(clarification),
+        responses = remove_latex(responses),
+        notes = remove_latex(notes),
+        crosscoder_aggregation = remove_latex(crosscoder_aggregation),
+        datarelease = remove_latex(datarelease),
+        convergence = remove_latex(convergence))
+
+dif <- setdiff(codebook$tag, unique(names(vdem)))
+select(vdem, starts_with(dif)) %>% names()
+
 save("codebook", file = "data/codebook.RData")
 
 # do any additional changes/updates of the scripts in
